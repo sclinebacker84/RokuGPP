@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="Search" extends="Group">
+  <children>
+    <LayoutGroup id="lgroup">
+      <Label id="lgroupTitle"/>
+      <LabelList id="items"></LabelList>
+    </LayoutGroup>
+  </children>
+  <script type="text/brightscript" uri="Search.brs"></script>
+</component>

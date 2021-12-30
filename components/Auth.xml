@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="Auth" extends="Group">
+  <interface>
+    <field id="finished" type="boolean"/>
+  </interface>
+  <children>
+    <KeyboardDialog id="kb"/>
+  </children>
+  <script type="text/brightscript" uri="Auth.brs"></script>
+</component>
