@@ -1,2 +1,2 @@
-# hello-world
-A basic sample channel application for Roku
+# RokuGPP
+Plays videos from your google photos account on your roku
