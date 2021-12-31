@@ -1,4 +1,6 @@
 function init()
+    m.deviceInfo = createObject("roDeviceInfo")
+    m.uiResolution = m.deviceInfo.getUIResolution()
     m.sec = CreateObject("roRegistrySection", "GPPAuth")
 
     m.albumNode = m.top.findNode("albums")
@@ -36,6 +38,7 @@ end function
 'Album stuff
 
 function onAlbumSelected(a)
+    m.lastAlbumSelected = a.getData()
     fetchContent(m.albums.response[m.albumNode.content.getChild(a.getData()).description.toInt()])
 end function
 
@@ -56,6 +59,10 @@ function onAlbumsFetched(a)
 end function
 
 function searchAlbums(s = invalid)
+    if(s <> m.lastAlbumSearch)
+        m.lastAlbumSelected = 0
+    end if
+    m.lastAlbumSearch = s
     content = createObject("roSGNode", "ContentNode")
     m.albumNode.content = content
     m.albumNode.setFocus(True)
@@ -69,6 +76,7 @@ function searchAlbums(s = invalid)
         end if
         i = i + 1
     end for
+    m.albumNode.jumpToItem = m.lastAlbumSelected
     m.lgroupTitle.text = "Albums"
     if(s <> invalid)
         m.lgroupTitle.text = m.lgroupTitle.text + " (Searching for: " + s + ")"
@@ -78,24 +86,27 @@ end function
 'Content stuff
 
 function onContentSelected(a)
+    m.lastContentSelected = a.getData()
     a = m.content.response[m.contentNode.content.getChild(a.getData()).description.toInt()]
-    m.vid = createObject("roSGNode","Video")
-    m.vidC = createObject("roSGNode","ContentNode")
-    m.vidC.ContentType = "movie"
-    res = "m18"
-    me = a.mediaMetadata
-    if me.width.toInt() >= 720 and me.width.toInt() < 1920
-        res = "m22"
-    else if me.width.toInt() >= 1920
-        res = "m37"
+    if(a.mediaMetadata.video <> invalid)
+        m.vid = createObject("roSGNode","Video")
+        m.vidC = createObject("roSGNode","ContentNode")
+        m.vidC.ContentType = "movie"
+        res = "m18"
+        m.vidC.url = a.baseUrl+"=dv-"+res
+        m.vidC.Title = a.filename
+        m.vid.content = m.vidC
+        m.vid.observeField("state","onVideoStateChange")
+        m.top.appendChild(m.vid)
+        m.vid.setFocus(True)
+        m.vid.control = "play"
+    else if(a.mediaMetadata.photo <> invalid)
+        m.vid = createObject("roSGNode","Poster")
+        m.vid.translation = [160,8]
+        m.vid.uri = a.baseUrl+"=h"+m.uiResolution.height.toStr()+"-w"+m.uiResolution.width.toStr()
+        m.top.appendChild(m.vid)
+        m.vid.setFocus(True)
     end if
-    m.vidC.url = a.baseUrl+"=dv-"+res
-    m.vidC.Title = a.filename
-    m.vid.content = m.vidC
-    m.vid.observeField("state","onVideoStateChange")
-    m.top.appendChild(m.vid)
-    m.vid.setFocus(True)
-    m.vid.control = "play"
 end function
 
 function fetchContent(album)
@@ -116,6 +127,10 @@ function onContentFetched(a)
 end function
 
 function searchContent(s = invalid)
+    if m.lastContentSearch <> s
+        m.lastContentSelected = 0
+    end if
+    m.lastContentSearch = s
     content = createObject("roSGNode", "ContentNode")
     m.contentNode.content = content
     m.contentNode.setFocus(True)
@@ -129,6 +144,7 @@ function searchContent(s = invalid)
         end if
         i = i + 1
     end for
+    m.contentNode.jumpToItem = m.lastContentSelected
     m.rgroupTitle.text = "Items"
     if(s <> invalid)
         m.rgroupTitle.text = m.rgroupTitle.text + " (Searching for: " + s + ")"
@@ -184,11 +200,13 @@ function onKeyEvent(key,press) as Boolean
             return False
         else if(key = "back")
             if m.contentNode.hasFocus()
-                searchAlbums()
+                searchAlbums(m.lastAlbumSearch)
             else if m.vid.hasFocus()
-                m.vid.control = "stop"
+                if(m.vid.control <> invalid)
+                    m.vid.control = "stop"
+                end if
                 m.top.removeChild(m.vid)
-                searchContent()
+                searchContent(m.lastContentSearch)
             end if
             return True
         else if(key = "right" and m.contentNode.hasFocus())
