@@ -33,7 +33,6 @@ function refreshToken()
     else
         print msg.GetFailureReason()
     end if
-    m.top.finished = True
 end function
 
 function getTokens()    
@@ -78,6 +77,41 @@ function getAlbums(retry = True, pageToken = invalid)
         end if
         if msg.nextPageToken <> invalid
             getAlbums(True,msg.nextPageToken)
+        else
+            m.top.response = m.response.toArray()
+            m.top.finished = True
+        end if
+    end if
+end function
+
+function getContent(retry = True, pageToken = invalid)
+    ro = prepareRequest()
+    url = "https://photoslibrary.googleapis.com/v1/mediaItems:search"
+    if pageToken <> invalid
+        url = url + "?pageToken="+pageToken
+    end if
+    ro.setUrl(url)
+    ro.AddHeader("Authorization","Bearer "+m.sec.Read("AccessToken"))
+    ro.AddHeader("Content-type","application/json")
+    ro.AsyncPostFromString(formatJson({"pageSize":100,"albumId":m.top.album.id}))
+    msg = wait(0, m.port)
+    if msg.getResponseCode() >= 400
+        if retry
+            print msg.GetFailureReason()
+            refreshToken()
+            getContent(False, pageToken)
+        else
+            m.top.finished = True
+        end if
+    else
+        msg = parseJson(msg.getString())
+        if msg.mediaItems <> invalid
+            for each a in msg.mediaItems
+                m.response.addTail(a)
+            end for
+        end if
+        if msg.nextPageToken <> invalid
+            getContent(True,msg.nextPageToken)
         else
             m.top.response = m.response.toArray()
             m.top.finished = True

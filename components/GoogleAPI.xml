@@ -2,6 +2,7 @@
 <component name="GoogleAPI" extends="Task"> 
     <interface>
         <field id="code" type="string"/>
+        <field id="album" type="assocarray"/>
         <field id="response" type="array"/>
         <field id="finished" type="boolean"/>
     </interface>

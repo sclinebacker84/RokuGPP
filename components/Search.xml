@@ -2,8 +2,12 @@
 <component name="Search" extends="Group">
   <children>
     <LayoutGroup id="lgroup">
-      <Label id="lgroupTitle"/>
-      <LabelList id="items"></LabelList>
+      <Label id="lgroupTitle" horizAlign="center" height="30"/>
+      <LabelList id="albums"></LabelList>
+    </LayoutGroup>
+    <LayoutGroup id="rgroup">
+      <Label id="rgroupTitle" horizAlign="center" height="30"/>
+      <LabelList id="content"></LabelList>
     </LayoutGroup>
   </children>
   <script type="text/brightscript" uri="Search.brs"></script>
