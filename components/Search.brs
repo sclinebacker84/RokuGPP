@@ -6,6 +6,7 @@ function init()
     
     m.lgroup = m.top.findNode("lgroup")
     m.lgroup.translation = [100, 30]
+    m.albums = m.top.findNode("albums")
     m.lgroupTitle = m.top.findNode("lgroupTitle")
 
     m.contentNode = m.top.findNode("content")
@@ -13,6 +14,8 @@ function init()
 
     m.rgroup = m.top.findNode("rgroup")
     m.rgroup.translation = [500, 30]
+    m.content = m.top.findNode("content")
+    m.content.itemSize = [m.content.itemSize[0] + 300, m.content.itemSize[1]]
     m.rgroupTitle = m.top.findNode("rgroupTitle")
     
     fetchAlbums()
@@ -79,7 +82,14 @@ function onContentSelected(a)
     m.vid = createObject("roSGNode","Video")
     m.vidC = createObject("roSGNode","ContentNode")
     m.vidC.ContentType = "movie"
-    m.vidC.url = a.baseUrl+"=dv-m18"
+    res = "m18"
+    me = a.mediaMetadata
+    if me.width.toInt() >= 720 and me.width.toInt() < 1920
+        res = "m22"
+    else if me.width.toInt() >= 1920
+        res = "m37"
+    end if
+    m.vidC.url = a.baseUrl+"=dv-"+res
     m.vidC.Title = a.filename
     m.vid.content = m.vidC
     m.vid.observeField("state","onVideoStateChange")
@@ -127,15 +137,22 @@ end function
 
 function handleSearch(a)
     if a.getData() = 0
-        m.kb.close = True
-        m.top.removeChild(m.kb)
-        searchAlbums(lcase(m.kb.text))
-    else
-        print "searchContent"
+        if m.albumNode.id = m.lastFocused.id
+            searchAlbums(lcase(m.kb.text))
+        else
+            searchContent(lcase(m.kb.text))
+        end if
     end if
+    m.kb.close = True
+    m.top.removeChild(m.kb)
+    m.lastFocused.setFocus(True)
 end function
 
 function createKb()
+    m.lastFocused = m.albumNode
+    if(m.contentNode.hasFocus())
+        m.lastFocused = m.contentNode
+    end if
     m.kb = createObject("roSGNode","KeyboardDialog")
     m.kb.buttons = ["OK","Cancel"]
     m.kb.title = "Search"
@@ -144,11 +161,40 @@ function createKb()
     m.kb.observeField("buttonSelected","handleSearch")
 end function
 
+function showVideoInfoModal()
+    a = m.content.response[m.contentNode.content.getChild(m.contentNode.itemFocused).description.toInt()]
+    m.dg = createObject("roSGNode","Dialog")
+    m.dg.title = "Info"
+    m.dg.buttons = ["Ok"]
+    m.dg.observeField("buttonSelected","closeVideoInfoModal")
+    m.dg.message = formatJson(a.mediaMetadata)
+    m.top.appendChild(m.dg)
+    m.dg.setFocus(True)
+end function
+
+function closeVideoInfoModal()
+    m.top.removeChild(m.dg)
+    m.contentNode.setFocus(True)
+end function
+
 function onKeyEvent(key,press) as Boolean
     if(press)
         if(key = "options")
             createKb()
+            return False
+        else if(key = "back")
+            if m.contentNode.hasFocus()
+                searchAlbums()
+            else if m.vid.hasFocus()
+                m.vid.control = "stop"
+                m.top.removeChild(m.vid)
+                searchContent()
+            end if
+            return True
+        else if(key = "right" and m.contentNode.hasFocus())
+            showVideoInfoModal()
+            return False
         end if
     end if
-    return False
+    return True
 end function
