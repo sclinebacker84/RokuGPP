@@ -1,6 +1,9 @@
 # RokuGPP
 Plays videos from your google photos account on your roku
 
+# Oauth URL
+https://accounts.google.com/o/oauth2/v2/auth?client_id=621773537275-b0nl9pl7rso4rdul4q4i9ejkecpasgfe.apps.googleusercontent.com&redirect_uri=urn:ietf:wg:oauth:2.0:oob&response_type=code&scope=https://www.googleapis.com/auth/photoslibrary.readonly
+
 # Privacy Policy
 
 ```
