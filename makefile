@@ -18,6 +18,6 @@
 APPNAME = RokuGPP
 VERSION = 1.0
 
-ZIP_EXCLUDE= -x \*.pkg -x storeassets\* -x keys\* -x \*/.\* -x node_modules\* -x static\*
+ZIP_EXCLUDE= -x \*.pkg -x storeassets\* -x keys\* -x \*/.\* -x node_modules\* -x static\* -x .git\* -x *.js -x *.json
 
 include ./app.mk
