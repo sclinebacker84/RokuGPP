@@ -37,7 +37,8 @@ end function
 
 function getTokens()    
     ro = prepareAuthRequest()
-    ro.AsyncPostFromString("client_id="+m.creds.client_id + m.br + "client_secret="+m.creds.client_secret + m.br + "grant_type=authorization_code" + m.br + "redirect_uri=urn:ietf:wg:oauth:2.0:oob" + m.br + "code="+m.top.code)
+    redirect_uri = "https://sclinebacker84.github.io/RokuGPP/static/".EncodeUri()
+    ro.AsyncPostFromString("client_id="+m.creds.client_id + m.br + "client_secret="+m.creds.client_secret + m.br + "grant_type=authorization_code" + m.br + "redirect_uri=" + redirect_uri  + m.br + "code="+m.top.code)
     msg = wait(0, m.port)
     if msg.getResponseCode() < 300
         msg = ParseJson(msg.getString())
