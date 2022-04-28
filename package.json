@@ -1,0 +1,22 @@
+{
+  "name": "rokugpp",
+  "version": "1.0.0",
+  "description": "Plays videos from your google photos account on your roku",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sclinebacker84/RokuGPP.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sclinebacker84/RokuGPP/issues"
+  },
+  "homepage": "https://github.com/sclinebacker84/RokuGPP#readme",
+  "dependencies": {
+    "express": "^4.18.0"
+  }
+}

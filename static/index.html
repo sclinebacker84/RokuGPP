@@ -1,0 +1,37 @@
+<html>
+    <head>
+        <script type="module">
+            import { h, Component, render } from 'https://unpkg.com/preact?module';
+            function oauthSignIn() {
+                const form = document.createElement('form')
+                form.setAttribute('action',  'https://accounts.google.com/o/oauth2/v2/auth')
+                const params = {'client_id': '621773537275-b0nl9pl7rso4rdul4q4i9ejkecpasgfe.apps.googleusercontent.com',
+                    'redirect_uri': 'http://localhost',
+                    'response_type': 'token',
+                    'scope': 'https://www.googleapis.com/auth/photoslibrary.readonly',
+                    'include_granted_scopes': 'true',
+                    'state': 'pass-through value'
+                }
+                for (const p in params) {
+                    var input = document.createElement('input');
+                    input.setAttribute('type', 'hidden');
+                    input.setAttribute('name', p);
+                    input.setAttribute('value', params[p]);
+                    form.appendChild(input);
+                }
+                document.body.appendChild(form);
+                form.submit();
+            }
+            class Container extends Component {
+                componentDidMount(){
+                    // oauthSignIn()
+                }
+                render(){
+                    return h('div',undefined,'Redirecting...')
+                }
+            }
+            render(h(Container,undefined),document.body)
+        </script>
+    </head>
+    <body></body>
+</html>
