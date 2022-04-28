@@ -43,12 +43,10 @@
                     return h('div',undefined,
                         h('div',undefined,
                             h('h2',undefined,'Redirect URL'),
-                            h('br'),
                             h('h4',undefined,redirect_uri)
                         ),
                         !!this.state.code && h('div',undefined,
                             h('h1',undefined,'Copy the below code'),
-                            h('br'),
                             h('h3',undefined,this.state.code)
                         )
                     )
