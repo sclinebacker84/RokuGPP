@@ -1,4 +1,5 @@
 dist/
 oauth2.json
+oauth_webapp.json
 genkey
 node_modules/

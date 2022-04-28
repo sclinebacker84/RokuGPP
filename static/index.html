@@ -1,36 +1,55 @@
 <html>
     <head>
         <script type="module">
-            import { h, Component, render } from 'https://unpkg.com/preact?module';
+            const PARAMS = new URLSearchParams(window.location.search)
+            const redirect_uri = window.location.protocol+'//'+window.location.host
+            import { h, Component, render } from 'https://unpkg.com/preact?module'
             function oauthSignIn() {
+                const oauth2Endpoint = 'https://accounts.google.com/o/oauth2/v2/auth'
                 const form = document.createElement('form')
-                form.setAttribute('action',  'https://accounts.google.com/o/oauth2/v2/auth')
-                const params = {'client_id': '621773537275-b0nl9pl7rso4rdul4q4i9ejkecpasgfe.apps.googleusercontent.com',
-                    'redirect_uri': 'https://sclinebacker84.github.io/RokuGPP/static/',
-                    'response_type': 'token',
-                    'scope': 'https://www.googleapis.com/auth/photoslibrary.readonly',
-                    'include_granted_scopes': 'true',
-                    'state': 'pass-through value'
+                form.setAttribute('method', 'GET')
+                form.setAttribute('action', oauth2Endpoint)
+                const params = {
+                    'client_id': '621773537275-n91v8k20lt03od5ivv8j2kum9kg5lf0l.apps.googleusercontent.com',
+                    redirect_uri,
+                    'response_type':'code',
+                    'scope':'https://www.googleapis.com/auth/photoslibrary.readonly',
+                    'access_type':'offline'
                 }
                 for (const p in params) {
-                    var input = document.createElement('input');
-                    input.setAttribute('type', 'hidden');
-                    input.setAttribute('name', p);
-                    input.setAttribute('value', params[p]);
-                    form.appendChild(input);
+                    const input = document.createElement('input')
+                    input.setAttribute('type', 'hidden')
+                    input.setAttribute('name', p)
+                    input.setAttribute('value', params[p])
+                    form.appendChild(input)
                 }
-                document.body.appendChild(form);
-                form.submit();
+                document.body.appendChild(form)
+                form.submit()
             }
-            class Container extends Component {
+            class Container extends Component{
+                constructor(props){
+                    super(props)
+                    this.state = {}
+                }
                 componentDidMount(){
-                    oauthSignIn()
+                    if(!PARAMS.get('code')){
+                        oauthSignIn()
+                    }else{
+                        this.setState({code:PARAMS.get('code')})
+                    }
                 }
                 render(){
-                    return h('div',undefined,'Redirecting...')
+                    return h('div',undefined,
+                        h('div',undefined,`Redirect: ${redirect_uri}`),
+                        !!this.state.code && h('div',undefined,
+                            h('h1',undefined,'Copy the below code'),
+                            h('br'),
+                            h('div',undefined,this.state.code)
+                        )
+                    )
                 }
-            }
-            render(h(Container,undefined),document.body)
+            }            
+            render(h(Container,{}), document.body)
         </script>
     </head>
     <body></body>
