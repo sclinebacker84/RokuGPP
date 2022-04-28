@@ -2,7 +2,7 @@
     <head>
         <script type="module">
             const PARAMS = new URLSearchParams(window.location.search)
-            const redirect_uri = window.location.protocol+'//'+window.location.host
+            const redirect_uri = window.location.protocol+'//'+window.location.host + window.location.pathname
             import { h, Component, render } from 'https://unpkg.com/preact?module'
             function oauthSignIn() {
                 const oauth2Endpoint = 'https://accounts.google.com/o/oauth2/v2/auth'

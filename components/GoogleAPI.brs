@@ -2,7 +2,7 @@ function init()
     m.sec = CreateObject("roRegistrySection", "GPPAuth")
     m.port = CreateObject("roMessagePort")
     m.br = "&"
-    m.creds = ParseJson(ReadAsciiFile("pkg:/oauth2.json")).installed
+    m.creds = ParseJson(ReadAsciiFile("pkg:/oauth2.json")).web
     m.response = createObject("roList")
 end function
 
