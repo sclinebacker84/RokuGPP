@@ -6,7 +6,7 @@
                 const form = document.createElement('form')
                 form.setAttribute('action',  'https://accounts.google.com/o/oauth2/v2/auth')
                 const params = {'client_id': '621773537275-b0nl9pl7rso4rdul4q4i9ejkecpasgfe.apps.googleusercontent.com',
-                    'redirect_uri': 'http://localhost',
+                    'redirect_uri': 'https://sclinebacker84.github.io/RokuGPP/static/',
                     'response_type': 'token',
                     'scope': 'https://www.googleapis.com/auth/photoslibrary.readonly',
                     'include_granted_scopes': 'true',
@@ -24,7 +24,7 @@
             }
             class Container extends Component {
                 componentDidMount(){
-                    // oauthSignIn()
+                    oauthSignIn()
                 }
                 render(){
                     return h('div',undefined,'Redirecting...')
