@@ -15,7 +15,8 @@
                     redirect_uri,
                     'response_type':'code',
                     'scope':'https://www.googleapis.com/auth/photoslibrary.readonly',
-                    'access_type':'offline'
+                    'access_type':'offline',
+                    'approval_prompt':'force'
                 }
                 for (const p in params) {
                     const input = document.createElement('input')
