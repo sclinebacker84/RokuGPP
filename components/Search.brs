@@ -85,9 +85,42 @@ end function
 
 'Content stuff
 
+function fetchContent(album)
+    m.pg = createObject("roSGNode", "ProgressDialog")
+    m.pg.title = "Getting Content for: "+album.title
+    m.top.appendChild(m.pg)
+    m.content = createObject("roSGNode", "GoogleAPI")
+    m.content.functionName = "getContent"
+    m.content.album = album
+    m.content.observeField("finished","onContentFetched")
+    m.content.control = "RUN"
+end function
+
+function onContentFetched(a)
+    m.top.removeChild(m.pg)
+    m.content.response = sort(m.content.response,"filename")
+    searchContent()
+end function
+
 function onContentSelected(a)
     m.lastContentSelected = a.getData()
-    a = m.content.response[m.contentNode.content.getChild(a.getData()).description.toInt()]
+    fetchItem(m.content.response[m.contentNode.content.getChild(a.getData()).description.toInt()])
+end function
+
+function fetchItem(item)
+    m.pg = createObject("roSGNode", "ProgressDialog")
+    m.pg.title = "Refreshing: "+item.filename
+    m.top.appendChild(m.pg)
+    m.item = createObject("roSGNode", "GoogleAPI")
+    m.item.functionName = "getItem"
+    m.item.item = item
+    m.item.observeField("finished","onItemFetched")
+    m.item.control = "RUN"
+end function
+
+function onItemFetched(a)
+    m.top.removeChild(m.pg)
+    a = m.item.item
     if(a.mediaMetadata.video <> invalid)
         m.vid = createObject("roSGNode","Video")
         m.vidC = createObject("roSGNode","ContentNode")
@@ -107,23 +140,6 @@ function onContentSelected(a)
         m.top.appendChild(m.vid)
         m.vid.setFocus(True)
     end if
-end function
-
-function fetchContent(album)
-    m.pg = createObject("roSGNode", "ProgressDialog")
-    m.pg.title = "Getting Content for: "+album.title
-    m.top.appendChild(m.pg)
-    m.content = createObject("roSGNode", "GoogleAPI")
-    m.content.functionName = "getContent"
-    m.content.album = album
-    m.content.observeField("finished","onContentFetched")
-    m.content.control = "RUN"
-end function
-
-function onContentFetched(a)
-    m.top.removeChild(m.pg)
-    m.content.response = sort(m.content.response,"filename")
-    searchContent()
 end function
 
 function searchContent(s = invalid)

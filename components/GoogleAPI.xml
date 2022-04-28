@@ -3,6 +3,7 @@
     <interface>
         <field id="code" type="string"/>
         <field id="album" type="assocarray"/>
+        <field id="item" type="assocarray"/>
         <field id="response" type="array"/>
         <field id="finished" type="boolean"/>
     </interface>

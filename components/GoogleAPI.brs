@@ -35,7 +35,7 @@ function refreshToken()
     end if
 end function
 
-function getTokens()    
+function getTokens()
     ro = prepareAuthRequest()
     redirect_uri = "https://sclinebacker84.github.io/RokuGPP/static/".EncodeUri()
     ro.AsyncPostFromString("client_id="+m.creds.client_id + m.br + "client_secret="+m.creds.client_secret + m.br + "grant_type=authorization_code" + m.br + "redirect_uri=" + redirect_uri  + m.br + "code="+m.top.code)
@@ -115,6 +115,31 @@ function getContent(retry = True, pageToken = invalid)
             getContent(True,msg.nextPageToken)
         else
             m.top.response = m.response.toArray()
+            m.top.finished = True
+        end if
+    end if
+end function
+
+function getItem(retry = True)
+    ro = prepareRequest()
+    url = "https://photoslibrary.googleapis.com/v1/mediaItems/" + m.top.item.id
+    ro.setUrl(url)
+    ro.AddHeader("Authorization","Bearer "+m.sec.Read("AccessToken"))
+    ro.AddHeader("Content-type","application/json")
+    ro.AsyncGetToString()
+    msg = wait(0, m.port)
+    if msg.getResponseCode() >= 400
+        if retry
+            print msg.GetFailureReason()
+            refreshToken()
+            getItem(False)
+        else
+            m.top.finished = True
+        end if
+    else
+        msg = parseJson(msg.getString())
+        if msg.id <> invalid
+            m.top.item = msg
             m.top.finished = True
         end if
     end if
