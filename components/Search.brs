@@ -136,17 +136,7 @@ function onItemFetched(a)
     m.top.removeChild(m.pg)
     a = m.item.item
     if(a.mediaMetadata.video <> invalid)
-        m.vid = createObject("roSGNode","Video")
-        m.vidC = createObject("roSGNode","ContentNode")
-        m.vidC.ContentType = "movie"
-        res = "m18"
-        m.vidC.url = a.baseUrl+"=dv-"+res
-        m.vidC.Title = a.filename
-        m.vid.content = m.vidC
-        m.vid.observeField("state","onVideoStateChange")
-        m.top.appendChild(m.vid)
-        m.vid.setFocus(True)
-        m.vid.control = "play"
+        playVideo(a)
     else if(a.mediaMetadata.photo <> invalid)
         m.vid = createObject("roSGNode","Poster")
         m.vid.translation = [160,8]
@@ -154,6 +144,20 @@ function onItemFetched(a)
         m.top.appendChild(m.vid)
         m.vid.setFocus(True)
     end if
+end function
+
+function playVideo(a)
+    m.vid = createObject("roSGNode","Video")
+    m.vidC = createObject("roSGNode","ContentNode")
+    m.vidC.ContentType = "movie"
+    res = "m18"
+    m.vidC.url = a.baseUrl+"=dv-"+res
+    m.vidC.Title = a.filename
+    m.vid.content = m.vidC
+    m.vid.observeField("state","onVideoStateChange")
+    m.top.appendChild(m.vid)
+    m.vid.setFocus(True)
+    m.vid.control = "play"
 end function
 
 function searchContent(s = invalid)
@@ -225,13 +229,13 @@ end function
 
 function onKeyEvent(key,press) as Boolean
     if(press)
-        if(key = "options")
+        if(key = "options" and (m.contentNode.hasFocus() or m.albumNode.hasFocus()))
             createKb()
             return False
         else if(key = "back")
             if m.contentNode.hasFocus()
                 searchAlbums(m.lastAlbumSearch)
-            else if m.vid.hasFocus()
+            else if m.vid <> invalid and m.vid.hasFocus()
                 if(m.vid.control <> invalid)
                     m.vid.control = "stop"
                 end if
@@ -245,4 +249,18 @@ function onKeyEvent(key,press) as Boolean
         end if
     end if
     return True
+end function
+
+function onVideoStateChange(a)
+    a = a.getData()
+    if a = "finished"
+        if m.lastContentSelected < (m.content.response.count() - 1)
+            m.top.removeChild(m.vid)
+            m.lastContentSelected = m.lastContentSelected + 1
+            fetchItem(m.content.response[m.lastContentSelected])
+        else
+            m.lastContentSelected = 0
+        end if
+        m.contentNode.jumpToItem = m.lastContentSelected
+    end if
 end function
