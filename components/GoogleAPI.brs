@@ -108,6 +108,7 @@ function getContent(retry = True, pageToken = invalid)
         msg = parseJson(msg.getString())
         if msg.mediaItems <> invalid
             for each a in msg.mediaItems
+                a.AddReplace("creationTime",a.mediaMetadata.creationTime)
                 m.response.addTail(a)
             end for
         end if

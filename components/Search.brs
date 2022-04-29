@@ -23,10 +23,24 @@ function init()
     fetchAlbums()
 end function
 
-function sort(a,k)
+function sort(a,k,useRegex=False)
     d = {}
+    r = createObject("roRegex","\d+","i")
     for each i in a:
-        d[i[k]] = i
+        if useRegex
+            m = r.MatchAll(CreateObject("roPath","pkg:/"+i[k]).split()["basename"])
+            if m.count() > 0
+                m = m[m.Count()-1][0]
+                while Len(m) < 3
+                    m = "0"+m
+                end while
+            else
+                m = i[k]
+            end if
+            d[m] = i
+        else
+            d[i[k]] = i
+        end if
     end for
     l = createObject("roList")
     for each i in d.keys()
@@ -98,7 +112,7 @@ end function
 
 function onContentFetched(a)
     m.top.removeChild(m.pg)
-    m.content.response = sort(m.content.response,"filename")
+    m.content.response = sort(m.content.response,"filename",True)
     searchContent()
 end function
 
