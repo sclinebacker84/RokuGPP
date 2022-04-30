@@ -23,12 +23,13 @@ function init()
     fetchAlbums()
 end function
 
-function sort(a,k,useRegex=False)
+function sort(a,k,useRegex=False,prefixNum=False)
     d = {}
-    r = createObject("roRegex","\d+","i")
+    r = createObject("roRegex","\d+(?!\))","i")
     for each i in a:
         if useRegex
-            m = r.MatchAll(CreateObject("roPath","pkg:/"+i[k]).split()["basename"])
+            b = CreateObject("roPath","pkg:/"+i[k]).split()["basename"]
+            m = r.MatchAll(b)
             if m.count() > 0
                 m = m[m.Count()-1][0]
                 while Len(m) < 3
@@ -37,7 +38,12 @@ function sort(a,k,useRegex=False)
             else
                 m = i[k]
             end if
-            d[m] = i
+            if prefixNum:
+                d[m+b] = i
+            else
+                b = r.ReplaceAll(b,"").trim()
+                d[b+m] = i
+            end if
         else
             d[i[k]] = i
         end if
@@ -68,7 +74,7 @@ end function
 
 function onAlbumsFetched(a)
     m.top.removeChild(m.pg)
-    m.albums.response = sort(m.albums.response,"title")
+    m.albums.response = sort(m.albums.response,"title",True,False)
     searchAlbums()
 end function
 
@@ -112,7 +118,7 @@ end function
 
 function onContentFetched(a)
     m.top.removeChild(m.pg)
-    m.content.response = sort(m.content.response,"filename",True)
+    m.content.response = sort(m.content.response,"filename",m.content.album.title.instr(0,"Movie") < 0,True)
     searchContent()
 end function
 
