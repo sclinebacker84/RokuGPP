@@ -1,22 +1,34 @@
 <html>
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre.min.css">
+        <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre-exp.min.css">
+        <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre-icons.min.css">
         <script type="module">
             const PARAMS = new URLSearchParams(window.location.search)
+            const CLIENT_SECRET = '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'
+            const CLIENT_ID = '621773537275-n91v8k20lt03od5ivv8j2kum9kg5lf0l.apps.googleusercontent.com'
+            const AUTH_URL = 'https://oauth2.googleapis.com/token'
+            const MEDIA_URL = 'https://photoslibrary.googleapis.com/v1/'
+            const state = JSON.parse(PARAMS.get('state')) || {}
             const redirect_uri = window.location.protocol+'//'+window.location.host + window.location.pathname
+            const REGEX = /\d+(?!\))/ig
+            const PAGE_SIZE = 100
             import { h, Component, render } from 'https://unpkg.com/preact?module'
+            
             function oauthSignIn() {
                 const oauth2Endpoint = 'https://accounts.google.com/o/oauth2/v2/auth'
                 const form = document.createElement('form')
                 form.setAttribute('method', 'GET')
                 form.setAttribute('action', oauth2Endpoint)
                 const params = {
-                    'client_id': '621773537275-n91v8k20lt03od5ivv8j2kum9kg5lf0l.apps.googleusercontent.com',
+                    'client_id': CLIENT_ID,
                     redirect_uri,
                     'response_type':'code',
                     'scope':'https://www.googleapis.com/auth/photoslibrary.readonly',
                     'access_type':'offline',
-                    'prompt':'consent'
+                    'prompt':'consent',
+                    state:JSON.stringify(state)
                 }
                 for (const p in params) {
                     const input = document.createElement('input')
@@ -28,6 +40,179 @@
                 document.body.appendChild(form)
                 form.submit()
             }
+            
+            class Player extends Component {
+                constructor(props){
+                    super(props)
+                    this.state = {albums:[],contents:[]}
+                    this.get_access_token().then(() => this.get_albums()).then(albums => this.setState({albums:this.sort(albums,'title',true,false)}))
+                }
+                sort(data,k,useRegex,isTv){
+                    return data.sort((a,b) => {
+                        a = a[k].split('.')
+                        b = b[k].split('.')
+                        if(a.length > 1){
+                            a = a.slice(0,a.length-1)
+                        }
+                        if(b.length > 1){
+                            b = b.slice(0,b.length-1)
+                        }
+                        a = a.join('.')
+                        b = b.join('.')
+                        if(useRegex){
+                            let m1 = [...a.matchAll(REGEX)]
+                            let m2 = [...b.matchAll(REGEX)]
+                            m1 = m1.length ? m1[m1.length-1][0] : ''
+                            m2 = m2.length ? m2[m2.length-1][0] : ''
+                            m1 = m1.padStart(4,'0')
+                            m2 = m2.padStart(4,'0')
+                            a = a.replaceAll(REGEX,'').trim()
+                            b = b.replaceAll(REGEX,'').trim()
+                            if(!isTv){
+                                a = a + m1
+                                b = b + m2
+                            }else{
+                                a = m1 + a
+                                b = m2 + b
+                            }
+                        }
+                        return a > b ? 1 : -1
+                    })
+                }
+                async get_access_token(){
+                    const refresh_token = localStorage.getItem('refresh_token')
+                    if(!refresh_token || refresh_token == 'undefined'){
+                        const body = new FormData()
+                        body.append('client_id',CLIENT_ID)
+                        body.append('client_secret',CLIENT_SECRET)
+                        body.append('redirect_uri',redirect_uri)
+                        body.append('code',PARAMS.get('code'))
+                        body.append('grant_type','authorization_code')
+                        let res = await fetch(AUTH_URL,{method:'post',body})
+                        res = await res.json()
+                        localStorage.setItem('access_token',res.access_token)
+                        localStorage.setItem('refresh_token',res.refresh_token)
+                    }
+                }
+                async refresh_token(){
+                    const body = new FormData()
+                    body.append('client_id',CLIENT_ID)
+                    body.append('client_secret',CLIENT_SECRET)
+                    body.append('refresh_token',localStorage.getItem('refresh_token'))
+                    body.append('grant_type','refresh_token')
+                    let res = await fetch(AUTH_URL,{method:'post',body})
+                    res = await res.json()
+                    localStorage.setItem('access_token',res.access_token)
+                }
+                async get_albums(n){
+                    const url = MEDIA_URL+'albums'+(n ? '?pageToken='+n : '')
+                    const req = async () => await fetch(url,{headers:{'Authorization':'Bearer '+localStorage.getItem('access_token')}})
+                    let res = await req()
+                    if(!res.ok){
+                        await this.refresh_token()
+                        res = await req()
+                    }
+                    this.setState({loadingAlbums:true})
+                    res = await res.json()
+                    if(res.nextPageToken){
+                        return res.albums.concat(await this.get_albums(res.nextPageToken))
+                    }
+                    this.setState({loadingAlbums:false})
+                    return res.albums || []
+                }
+                async get_content(album,n){
+                    const url = MEDIA_URL+'mediaItems:search'+(n ? '?pageToken='+n : '')
+                    const req = async () => await fetch(url,{
+                        headers:{
+                            'Authorization':'Bearer '+localStorage.getItem('access_token'),
+                            'content-type':'application/json',
+                        },
+                        method:'post',
+                        body:JSON.stringify({'pageSize':PAGE_SIZE,'albumId':album.id})
+                    })
+                    let res = await req()
+                    if(!res.ok){
+                        await this.refresh_token()
+                        res = await req()
+                    }
+                    this.setState({loadingContent:true})
+                    res = await res.json()
+                    if(res.nextPageToken){
+                        return res.mediaItems.concat(await this.get_content(album,res.nextPageToken))
+                    }
+                    this.setState({loadingContent:false})
+                    return res.mediaItems || []
+                }
+                async get_item(content){
+                    const url = MEDIA_URL+'mediaItems/'+(content.id)
+                    const req = async () => await fetch(url,{
+                        headers:{
+                            'Authorization':'Bearer '+localStorage.getItem('access_token'),
+                            'content-type':'application/json',
+                        }
+                    })
+                    let res = await req()
+                    if(!res.ok){
+                        await this.refresh_token()
+                        res = await req()
+                    }
+                    res = await res.json()
+                    this.setState({content:res,url:`${res.baseUrl}=dv-m18`})
+                    this.state.video.load()
+                    this.state.video.play()
+                    this.state.video.onended  = () => {
+                        const i = this.state.contents.findIndex(a => a.id == this.state.content.id)
+                        if(i < this.state.contents.length - 1){
+                            this.get_item(this.state.contents[i+1])
+                        }
+                    }
+                }
+                albumSelected(album){
+                    this.setState({album})
+                    this.get_content(album).then(contents => this.setState({contents:this.sort(contents,'filename',true,!album.title.includes('Movie'))}))
+                }
+                contentSelected(content){
+                    this.setState({content})
+                    this.get_item(content)
+                }
+                show(text,search){
+                    return !search || text.toLowerCase().includes(search.toLowerCase())
+                }
+                render(){
+                    return h('div',{class:'container'},
+                        !!this.state.content && h('div',{class:'columns'},
+                            h('div',{class:'col-4 col-mx-auto'},
+                                h('video',{width:'640',height:'480',controls:true,autoplay:true,ref:video => this.state.video = video},
+                                    h('source',{src:this.state.url,type:'video/mp4'})
+                                )
+                            )
+                        ),
+                        h('div',{class:'columns'},
+                            h('div',{class:'column'},
+                                h('div',{class:'form-group'},
+                                    h('label',{class:'form-label'},`Albums (${this.state.albums.length} results)`),
+                                    h('input',{class:'form-input',onInput:e => this.setState({albumSearch:e.target.value}),value:this.state.albumSearch})
+                                ),
+                                h('div',{class:'divider'}),
+                                this.state.loadingAlbums ? h('div',{class:'loading loading-lg'}) : h('ul',{class:'menu'},this.state.albums.filter(a => this.show(a.title,this.state.albumSearch)).map(a => 
+                                    h('li',{class:'menu-item c-hand '+(a == this.state.album ? 'text-bold' : ''),onClick:e => this.albumSelected(a)},a.title)
+                                ))
+                            ),
+                            h('div',{class:'column'},
+                                h('div',{class:'form-group'},
+                                    h('label',{class:'form-label'},`Content (${this.state.contents.length} results)`),
+                                    h('input',{class:'form-input',onInput:e => this.setState({contentSearch:e.target.value}),value:this.state.contentSearch})
+                                ),
+                                h('div',{class:'divider'}),
+                                this.state.loadingContent ? h('div',{class:'loading loading-lg'}) : h('ul',{class:'menu'},this.state.contents.filter(a => this.show(a.filename,this.state.contentSearch)).map(a => 
+                                    h('li',{class:'menu-item c-hand '+(this.state.content && a.id == this.state.content.id ? 'text-bold' : ''),onClick:e => this.contentSelected(a)},a.filename)
+                                ))
+                            )
+                        )
+                    )
+                }
+            }
+            
             class Container extends Component{
                 constructor(props){
                     super(props)
@@ -41,7 +226,10 @@
                     }
                 }
                 render(){
-                    return h('div',undefined,
+                    if(state.mode == 'player'){
+                        return h(Player,undefined)
+                    }
+                    return h('div',{class:'container'},
                         h('div',undefined,
                             h('h2',undefined,'Redirect URL'),
                             h('h4',undefined,redirect_uri)
@@ -53,6 +241,7 @@
                     )
                 }
             }            
+            
             render(h(Container,{}), document.body)
         </script>
     </head>
