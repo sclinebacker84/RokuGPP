@@ -25,7 +25,7 @@ end function
 
 function sort(a,k,useRegex=False,prefixNum=False)
     d = {}
-    r = createObject("roRegex","\d+(?!\))","i")
+    r = createObject("roRegex","(?<!')\d+(?!\)|[a-z])","i")
     for each i in a:
         if useRegex
             b = CreateObject("roPath","pkg:/"+i[k]).split()["basename"]
@@ -97,7 +97,7 @@ function searchAlbums(s = invalid)
         i = i + 1
     end for
     m.albumNode.jumpToItem = m.lastAlbumSelected
-    m.lgroupTitle.text = "Albums"
+    m.lgroupTitle.text = "Albums ("+content.getChildCount().toStr()+")"
     if(s <> invalid)
         m.lgroupTitle.text = m.lgroupTitle.text + " (Searching for: " + s + ")"
     end if
@@ -156,8 +156,15 @@ function playVideo(a)
     m.vid = createObject("roSGNode","Video")
     m.vidC = createObject("roSGNode","ContentNode")
     m.vidC.ContentType = "movie"
-    res = "m18"
-    m.vidC.url = a.baseUrl+"=dv-"+res
+    m.vidC.streamFormat = "mp4"
+    if a.mediaMetadata.width.toInt() < 720
+        res = "m18"
+    else if a.mediaMetadata.width.toInt() < 1080
+        res = "m22"
+    else
+        res = "m37"
+    end if
+    m.vidC.url = a.baseUrl+"="+res
     m.vidC.Title = a.filename
     m.vid.content = m.vidC
     m.vid.observeField("state","onVideoStateChange")
@@ -185,7 +192,7 @@ function searchContent(s = invalid)
         i = i + 1
     end for
     m.contentNode.jumpToItem = m.lastContentSelected
-    m.rgroupTitle.text = "Items"
+    m.rgroupTitle.text = "Items ("+content.getChildCount().toStr()+")"
     if(s <> invalid)
         m.rgroupTitle.text = m.rgroupTitle.text + " (Searching for: " + s + ")"
     end if
@@ -238,7 +245,7 @@ function onKeyEvent(key,press) as Boolean
         if(key = "options" and (m.contentNode.hasFocus() or m.albumNode.hasFocus()))
             createKb()
             return False
-        else if(key = "back")
+        else if(key = "back" or key = "left")
             if m.contentNode.hasFocus()
                 searchAlbums(m.lastAlbumSearch)
             else if m.vid <> invalid and m.vid.hasFocus()
