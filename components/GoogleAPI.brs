@@ -108,8 +108,10 @@ function getContent(retry = True, pageToken = invalid)
         msg = parseJson(msg.getString())
         if msg.mediaItems <> invalid
             for each a in msg.mediaItems
-                a.AddReplace("creationTime",a.mediaMetadata.creationTime)
-                m.response.addTail(a)
+                if(a.mediaMetadata.video.status = "READY")
+                    a.AddReplace("creationTime",a.mediaMetadata.creationTime)
+                    m.response.addTail(a)
+                end if
             end for
         end if
         if msg.nextPageToken <> invalid

@@ -19,6 +19,9 @@ function init()
     m.content = m.top.findNode("content")
     m.content.itemSize = [m.content.itemSize[0] + 300, m.content.itemSize[1]]
     m.rgroupTitle = m.top.findNode("rgroupTitle")
+
+    m.sortFields = ["filename","creationTime"]
+    m.sortField = 0
     
     fetchAlbums()
 end function
@@ -27,22 +30,22 @@ function sort(a,k,useRegex=False,prefixNum=False)
     d = {}
     r = createObject("roRegex","(?<!')\d+(?!\)|[a-z])","i")
     for each i in a:
-        if useRegex
+        if(useRegex)
             b = CreateObject("roPath","pkg:/"+i[k]).split()["basename"]
-            m = r.MatchAll(b)
-            if m.count() > 0
-                m = m[m.Count()-1][0]
-                while Len(m) < 3
-                    m = "0"+m
+            ma = r.MatchAll(b)
+            if ma.count() > 0
+                ma = ma[ma.Count()-1][0]
+                while Len(ma) < 3
+                    ma = "0"+ma
                 end while
             else
-                m = i[k]
+                ma = i[k]
             end if
             if prefixNum:
-                d[m+b] = i
+                d[ma+b] = i
             else
                 b = r.ReplaceAll(b,"").trim()
-                d[b+m] = i
+                d[b+ma] = i
             end if
         else
             d[i[k]] = i
@@ -118,7 +121,8 @@ end function
 
 function onContentFetched(a)
     m.top.removeChild(m.pg)
-    m.content.response = sort(m.content.response,"filename",m.content.album.title.instr(0,"Movie") < 0,True)
+    useRegex = m.content.album.title.instr(0,"Movie") < 0 and m.sortField = 0
+    m.content.response = sort(m.content.response,m.sortFields[m.sortField],useRegex,True)
     searchContent()
 end function
 
@@ -157,9 +161,9 @@ function playVideo(a)
     m.vidC = createObject("roSGNode","ContentNode")
     m.vidC.ContentType = "movie"
     m.vidC.streamFormat = "mp4"
-    if a.mediaMetadata.width.toInt() < 720
+    if a.mediaMetadata.height.toInt() < 720
         res = "m18"
-    else if a.mediaMetadata.width.toInt() < 1080
+    else if a.mediaMetadata.height.toInt() < 1080
         res = "m22"
     else
         res = "m37"
@@ -192,9 +196,9 @@ function searchContent(s = invalid)
         i = i + 1
     end for
     m.contentNode.jumpToItem = m.lastContentSelected
-    m.rgroupTitle.text = "Items ("+content.getChildCount().toStr()+")"
+    m.rgroupTitle.text = "Items ("+content.getChildCount().toStr()+"), Sort By: "+m.sortFields[m.sortField]
     if(s <> invalid)
-        m.rgroupTitle.text = m.rgroupTitle.text + " (Searching for: " + s + ")"
+        m.rgroupTitle.text = m.rgroupTitle.text + ", (Searching for: " + s + ")"
     end if
 end function
 
@@ -258,6 +262,13 @@ function onKeyEvent(key,press) as Boolean
             return True
         else if(key = "right" and m.contentNode.hasFocus())
             showVideoInfoModal()
+            return False
+        else if(key = "replay" and m.contentNode.hasFocus())
+            m.sortField = m.sortField + 1
+            if(m.sortField >= m.sortFields.count())
+                m.sortField = 0
+            end if
+            fetchContent(m.content.album)
             return False
         end if
     end if
